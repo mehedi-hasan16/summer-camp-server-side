@@ -29,7 +29,6 @@ async function run() {
 
         const classCollection = client.db("languageCamp").collection("classes");
         const usersCollection = client.db("languageCamp").collection("users");
-        const instructorsCollection = client.db("languageCamp").collection("instructors");
         const cartCollection = client.db("languageCamp").collection("cart");
 
         app.get('/classes', async (req, res) => {
@@ -52,8 +51,11 @@ async function run() {
         })
 
         // instructors
-        app.get('/instructors', async (req, res) => {
-            const result = await instructorsCollection.find().toArray()
+        app.get('/user', async (req, res) => {
+            const user = req.query;
+            console.log(user);
+            const query = { role: user.role }
+            const result = await usersCollection.find(query).toArray()
             res.send(result)
         })
 
