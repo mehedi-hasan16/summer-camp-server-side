@@ -30,6 +30,7 @@ async function run() {
         const classCollection = client.db("languageCamp").collection("classes");
         const usersCollection = client.db("languageCamp").collection("users");
         const instructorsCollection = client.db("languageCamp").collection("instructors");
+        const cartCollection = client.db("languageCamp").collection("cart");
 
         app.get('/classes', async (req, res) => {
             const result = await classCollection.find().toArray();
@@ -56,7 +57,25 @@ async function run() {
             res.send(result)
         })
 
+        //cart 
+        app.post('/cart', async (req, res) => {
+            const cartData = req.body;
+            console.log(cartData);
+            const query = {courseId: cartData.courseId, email: cartData.email}
+            const existingCourse = await cartCollection.findOne(query)
+            if(existingCourse){
+                return res.send({message: 'already added'})
+            }
+            const result = await cartCollection.insertOne(cartData);
+            res.send(result);
+        })
 
+        app.get('/cart', async (req, res) => {
+            const email = req.query.email;
+            console.log(email);
+            const result = await cartCollection.find({ email: email }).toArray();
+            res.send(result)
+        })
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
