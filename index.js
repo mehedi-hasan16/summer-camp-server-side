@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config();
@@ -50,23 +50,36 @@ async function run() {
             }
         })
 
-        // instructors
-        app.get('/user', async (req, res) => {
-            const user = req.query;
-            console.log(user);
-            const query = { role: user.role }
-            const result = await usersCollection.find(query).toArray()
+
+        app.get('/users', async (req, res) => {
+            const { role } = req.query;
+            if (!role) {
+                const result = await usersCollection.find().toArray();
+                return res.send(result);
+            }
+            const result = await usersCollection.find({ role }).toArray()
             res.send(result)
         })
+
+        // make admin or instructor 
+        app.patch('/users/:id/role', async (req, res) => {
+            const { id } = req.params;
+            const { role } = req.body;
+            console.log(id, role);
+            const result = await usersCollection.updateOne({ _id: new ObjectId(id) }, { $set: { role } });
+            res.send(result);
+
+        });
+
 
         //cart 
         app.post('/cart', async (req, res) => {
             const cartData = req.body;
-            console.log(cartData);
-            const query = {courseId: cartData.courseId, email: cartData.email}
+
+            const query = { courseId: cartData.courseId, email: cartData.email }
             const existingCourse = await cartCollection.findOne(query)
-            if(existingCourse){
-                return res.send({message: 'already added'})
+            if (existingCourse) {
+                return res.send({ message: 'already added' })
             }
             const result = await cartCollection.insertOne(cartData);
             res.send(result);
@@ -74,10 +87,19 @@ async function run() {
 
         app.get('/cart', async (req, res) => {
             const email = req.query.email;
-            console.log(email);
+
             const result = await cartCollection.find({ email: email }).toArray();
             res.send(result)
         })
+
+        app.delete('/cart/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await cartCollection.deleteOne(query);
+            res.send(result)
+        })
+
+
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
