@@ -28,6 +28,7 @@ async function run() {
 
 
     const classCollection = client.db("languageCamp").collection("classes");
+    const usersCollection = client.db("languageCamp").collection("users");
 
     app.get('/classes', async(req, res)=>{
         const result = await classCollection.find().toArray();
@@ -35,7 +36,18 @@ async function run() {
     })
 
 
-
+//users 
+app.post('/users', async(req, res)=>{
+    const user = req.body;
+    const query = {email : user.email}
+    const existingUser = await usersCollection.findOne(query)
+    if(existingUser){
+        return res.send({message: 'user already exist'})
+    }else{
+        const result = await usersCollection.insertOne(user)
+        res.send(result)
+    }
+})
 
 
 
