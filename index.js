@@ -43,12 +43,39 @@ async function run() {
             res.send(result)
         })
 
+
         app.post('/classes', async (req, res) => {
             const data = req.body;
             const result = await classCollection.insertOne(data);
             res.send(result)
         })
 
+        app.patch('/classes/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter ={_id : new ObjectId(id)}
+            const {status, comment} = req.body;
+         
+            if(status ==='approve'){
+                const updateDoc ={
+                    $set:{
+                        status:'approve',
+                        comment: comment|| ''
+                    }
+                }
+                const result = await classCollection.updateOne(filter, updateDoc);
+                return res.send(result);
+            }else if(status ==='denied') {
+                const updateDoc ={
+                    $set:{
+                        status:'denide',
+                        comment:comment||'',
+                    }
+                }
+                const result = await classCollection.updateOne(filter, updateDoc);
+                return res.send(result);
+            }
+
+        });
 
         //users 
         app.post('/users', async (req, res) => {
