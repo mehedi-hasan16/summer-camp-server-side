@@ -52,23 +52,23 @@ async function run() {
 
         app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id;
-            const filter ={_id : new ObjectId(id)}
-            const {status, comment} = req.body;
-         
-            if(status ==='approve'){
-                const updateDoc ={
-                    $set:{
-                        status:'approve',
-                        comment: comment|| ''
+            const filter = { _id: new ObjectId(id) }
+            const { status, comment } = req.body;
+
+            if (status === 'approve') {
+                const updateDoc = {
+                    $set: {
+                        status: 'approve',
+                        comment: comment || ''
                     }
                 }
                 const result = await classCollection.updateOne(filter, updateDoc);
                 return res.send(result);
-            }else if(status ==='denied') {
-                const updateDoc ={
-                    $set:{
-                        status:'denide',
-                        comment:comment||'',
+            } else if (status === 'denied') {
+                const updateDoc = {
+                    $set: {
+                        status: 'denied',
+                        comment: comment || '',
                     }
                 }
                 const result = await classCollection.updateOne(filter, updateDoc);
@@ -92,12 +92,16 @@ async function run() {
 
 
         app.get('/users', async (req, res) => {
-            const { role } = req.query;
-            if (!role) {
-                const result = await usersCollection.find().toArray();
+            const { role, email } = req.query;
+            console.log(role, email);
+            if (role) {
+                const result = await usersCollection.find({ role }).toArray();
                 return res.send(result);
+            } else if (email) {
+                const result = await usersCollection.find({ email }).toArray()
+                return res.send(result)
             }
-            const result = await usersCollection.find({ role }).toArray()
+            const result = await usersCollection.find().toArray()
             res.send(result)
         })
         // app.get('/users', async (req, res) => {
