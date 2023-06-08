@@ -31,8 +31,21 @@ async function run() {
         const usersCollection = client.db("languageCamp").collection("users");
         const cartCollection = client.db("languageCamp").collection("cart");
 
+        //classes
         app.get('/classes', async (req, res) => {
-            const result = await classCollection.find().toArray();
+            const { email } = req.query;
+            if (!email) {
+
+                const result = await classCollection.find().toArray();
+                return res.send(result)
+            }
+            const result = await classCollection.find({ email }).toArray()
+            res.send(result)
+        })
+
+        app.post('/classes', async (req, res) => {
+            const data = req.body;
+            const result = await classCollection.insertOne(data);
             res.send(result)
         })
 
@@ -60,6 +73,22 @@ async function run() {
             const result = await usersCollection.find({ role }).toArray()
             res.send(result)
         })
+        // app.get('/users', async (req, res) => {
+        //     const { role, email } = req.query;
+        //     if (!role && !email) {
+        //       const result = await usersCollection.find().toArray();
+        //       return res.send(result);
+        //     }
+        //     const query = {};
+        //     if (role) {
+        //       query.role = role;
+        //     }
+        //     if (email) {
+        //       query.email = email;
+        //     }
+        //     const result = await usersCollection.find(query).toArray();
+        //     res.send(result);
+        //   });
 
         // make admin or instructor 
         app.patch('/users/:id/role', async (req, res) => {
@@ -71,6 +100,13 @@ async function run() {
 
         });
 
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: new ObjectId(id) }
+            const result = await usersCollection.deleteOne(query)
+            res.send(result)
+        })
 
         //cart 
         app.post('/cart', async (req, res) => {
