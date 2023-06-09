@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config();
@@ -90,16 +91,21 @@ async function run() {
             }
         })
 
+        app.get('/users/userRole/:email', async(req, res)=>{
+            const email = req.params.email;
+
+            const query = {email: email}
+            const user = await usersCollection.findOne(query);
+            const result = {userRole: user?.role}
+            res.send(result)
+          })
 
         app.get('/users', async (req, res) => {
-            const { role, email } = req.query;
-            console.log(role, email);
+            const { role } = req.query;
+            console.log(role);
             if (role) {
                 const result = await usersCollection.find({ role }).toArray();
                 return res.send(result);
-            } else if (email) {
-                const result = await usersCollection.find({ email }).toArray()
-                return res.send(result)
             }
             const result = await usersCollection.find().toArray()
             res.send(result)
@@ -165,6 +171,23 @@ async function run() {
             const result = await cartCollection.deleteOne(query);
             res.send(result)
         })
+// create payment intent
+
+app.post("/create-payment-intent", async (req, res) => {
+    const { price } = req.body;
+    const amount = price * 100;
+  
+    // Create a PaymentIntent with the order amount and currency
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: amount,
+      currency: "usd",
+      payment_method_types: ['card'],
+    });
+  
+    res.send({
+      clientSecret: paymentIntent.client_secret,
+    });
+  });
 
 
         // Send a ping to confirm a successful connection
