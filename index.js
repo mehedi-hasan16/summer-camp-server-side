@@ -1,15 +1,35 @@
 const express = require('express');
 const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
+const stripe = require('stripe')('sk_test_51NFIdpIICzOiu7Q4YjUYVeN4DsS9yDQ11RAh4ehuk0vBOUvqHAOdul8QZOBn29kumEFZ6Qxv1noIBX12iu1ggXQV00pEvTx8Kh');
 const port = process.env.PORT || 5000;
 const app = express();
 require('dotenv').config();
+var jwt = require('jsonwebtoken');
 
 
-app.use(express.json())
 app.use(cors())
+app.use(express.json())
 
+console.log(process.env.PAYMENT_SECRET_KEY);
+//jwt verify
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+      return res.status(401).send({ error: true, message: 'unauthorized access' });
+    }
+
+    // bearer token
+    const token = authorization.split(' ')[1];
+  
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).send({ error: true, message: 'unauthorized access' })
+      }
+      req.decoded = decoded;
+      next();
+    })
+  }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.sv8l1qb.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -31,6 +51,34 @@ async function run() {
         const classCollection = client.db("languageCamp").collection("classes");
         const usersCollection = client.db("languageCamp").collection("users");
         const cartCollection = client.db("languageCamp").collection("cart");
+        const paymentCollection = client.db("languageCamp").collection("payments");
+
+        //jwt post 
+
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '2h' })
+      
+            res.send({ token })
+          })
+      
+          // jwt admin verifiy
+          const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user?.role !== 'admin') {
+              return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next();
+          }
+
+
+
+
+
+
+
 
         //classes
         app.get('/classes', async (req, res) => {
@@ -173,22 +221,29 @@ async function run() {
         })
 // create payment intent
 
-app.post("/create-payment-intent", async (req, res) => {
+app.post('/create-payment-intent', async (req, res) => {
     const { price } = req.body;
-    const amount = price * 100;
-  
-    // Create a PaymentIntent with the order amount and currency
+    const amount = parseInt(price * 100);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
-      currency: "usd",
-      payment_method_types: ['card'],
+      currency: 'usd',
+      payment_method_types: ['card']
     });
-  
-    res.send({
-      clientSecret: paymentIntent.client_secret,
-    });
-  });
 
+    res.send({
+      clientSecret: paymentIntent.client_secret
+    })
+  })
+
+  app.post('/payments', verifyJWT, async (req, res) => {
+    const payment = req.body;
+    const insertResult = await paymentCollection.insertOne(payment);
+
+    const query = { _id: { $in: payment.cartItems.map(id => new ObjectId(id)) } }
+    const deleteResult = await cartCollection.deleteMany(query)
+
+    res.send({ insertResult, deleteResult });
+  })
 
         // Send a ping to confirm a successful connection
         await client.db("admin").command({ ping: 1 });
