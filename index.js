@@ -115,7 +115,7 @@ async function run() {
                 const updateDoc = {
                     $set: {
                         status: 'approve',
-                        comment: comment || ''
+                        comment: comment || '',
                     }
                 }
                 const result = await classCollection.updateOne(filter, updateDoc);
@@ -133,22 +133,26 @@ async function run() {
 
         });
 
+
+
         // total sells and total seats of the course 
         app.post('/courses/:id/purchase', async (req, res) => {
             const courseId = req.params.id;
 
+            console.log(courseId);
             // Find the course by its ID
-            const course = await classCollection.findOne({ _id: ObjectId(courseId) });
+            const course = await classCollection.findOne({ _id: new ObjectId(courseId) });
 
+            console.log(course);
 
             // Check if there are available seats
             if (course.seats <= 0) {
                 return res.send({ message: 'No available seats' });
             }
 
-            // Decrement the number of seats and increment totalSales
-            const updatedCourse = await classCollection.findOneAndUpdate({ _id: ObjectId(courseId) },
-                { $inc: { seats: -1, totalSales: 1 } },
+            // Decrement the number of seats and increment enrolled
+            const updatedCourse = await classCollection.findOneAndUpdate({ _id: new ObjectId(courseId) },
+                { $inc: { seats: -1, enrolled: 1 } },
                 { returnOriginal: false }
             );
 
