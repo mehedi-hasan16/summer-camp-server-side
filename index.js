@@ -52,6 +52,7 @@ async function run() {
         const usersCollection = client.db("languageCamp").collection("users");
         const cartCollection = client.db("languageCamp").collection("cart");
         const paymentCollection = client.db("languageCamp").collection("payments");
+        const reviewCollection = client.db("languageCamp").collection("review");
 
         //jwt post 
 
@@ -79,12 +80,19 @@ async function run() {
 
         //payment classes 
         app.get('/enrolledClasses/:email', async (req, res) => {
-            const {email} = req.params;
+            const { email } = req.params;
             const result = await paymentCollection.find({ email }).sort({ date: -1 }).toArray();
             res.send(result)
         })
 
 
+
+        //get 6 class based on top number of students
+        app.get('/classes/topSort', async (req, res) => {
+            const result = await classCollection.find().sort({ enrolled: -1 }).limit(6).toArray();
+            res.send(result);
+        });
+//get 6 popular instructor based on 
         //classes
 
 
@@ -99,12 +107,14 @@ async function run() {
             res.send(result)
         })
 
-
+        //class post
         app.post('/classes', async (req, res) => {
             const data = req.body;
             const result = await classCollection.insertOne(data);
             res.send(result)
         })
+
+        //class patch
 
         app.patch('/classes/:id', async (req, res) => {
             const id = req.params.id;
@@ -195,6 +205,12 @@ async function run() {
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
+
+        app.get('/users/limitInstructor', async (req, res) => {
+            const result = await usersCollection.find({ role: 'instructor' }).limit(6).toArray();
+            res.send(result);
+        });
+        
         // app.get('/users', async (req, res) => {
         //     const { role, email } = req.query;
         //     if (!role && !email) {
@@ -282,7 +298,11 @@ async function run() {
             res.send({ insertResult, deleteResult });
         })
 
-
+//review 
+app.get('/review', async(req, res)=>{
+    const result = await reviewCollection.find().toArray();
+    res.send(result);
+})
 
 
         // Send a ping to confirm a successful connection
