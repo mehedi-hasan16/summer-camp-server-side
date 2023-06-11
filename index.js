@@ -111,16 +111,19 @@ async function run() {
             const result = await classCollection.find({ status: 'approve' }).toArray();
             return res.send(result)
         })
+        // classes get by email 
 
-        app.get('/classes', async (req, res) => {
-            const { email } = req.query;
-            if (!email) {
-
-                const result = await classCollection.find().toArray();
-                return res.send(result)
-            }
-            const result = await classCollection.find({ email }).toArray()
+        app.get('/classes/:email',verifyJWT, verifyInstructor, async (req, res) => {
+            const email = req.params.email;
+            const result = await classCollection.find({ email: email }).toArray()
             res.send(result)
+        })
+        //all classes 
+
+        app.get('/classes',verifyJWT, verifyAdmin, async (req, res) => {
+            const result = await classCollection.find().toArray();
+            res.send(result)
+
         })
 
         //class post
@@ -132,7 +135,7 @@ async function run() {
 
         //class patch
 
-        app.patch('/classes/:id', async (req, res) => {
+        app.patch('/classes/:id',verifyJWT,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const filter = { _id: new ObjectId(id) }
             const { status, comment } = req.body;
@@ -245,7 +248,7 @@ async function run() {
         //   });
 
         // make admin or instructor 
-        app.patch('/users/:id/role', async (req, res) => {
+        app.patch('/users/:id/role',verifyJWT, verifyAdmin, async (req, res) => {
             const { id } = req.params;
             const { role } = req.body;
             console.log(id, role);
@@ -254,7 +257,7 @@ async function run() {
 
         });
 
-        app.delete('/users/:id', async (req, res) => {
+        app.delete('/users/:id',verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             console.log(id);
             const query = { _id: new ObjectId(id) }
@@ -263,7 +266,7 @@ async function run() {
         })
 
         //cart 
-        app.post('/cart', async (req, res) => {
+        app.post('/cart',verifyJWT, async (req, res) => {
             const cartData = req.body;
 
             const query = { courseId: cartData.courseId, email: cartData.email }
@@ -282,7 +285,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/cart/:id', async (req, res) => {
+        app.delete('/cart/:id',verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await cartCollection.deleteOne(query);
