@@ -1,17 +1,17 @@
 const express = require('express');
 const cors = require('cors');
+require('dotenv').config();
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-const stripe = require('stripe')('sk_test_51NFIdpIICzOiu7Q4YjUYVeN4DsS9yDQ11RAh4ehuk0vBOUvqHAOdul8QZOBn29kumEFZ6Qxv1noIBX12iu1ggXQV00pEvTx8Kh');
 const port = process.env.PORT || 5000;
 const app = express();
-require('dotenv').config();
+const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY);
 var jwt = require('jsonwebtoken');
 
-
+//middleware 
 app.use(cors())
 app.use(express.json())
 
-console.log(process.env.PAYMENT_SECRET_KEY);
+
 //jwt verify
 const verifyJWT = (req, res, next) => {
     const authorization = req.headers.authorization;
@@ -73,6 +73,16 @@ async function run() {
             }
             next();
         }
+        // jwt instrructor verifiy 
+        const verifyInstructor = async (req, res, next) => {
+            const email = req.decoded.email;
+            const query = { email: email }
+            const user = await usersCollection.findOne(query);
+            if (user?.role !== 'instructor') {
+                return res.status(403).send({ error: true, message: 'forbidden message' });
+            }
+            next();
+        }
 
 
 
@@ -92,9 +102,8 @@ async function run() {
             const result = await classCollection.find().sort({ enrolled: -1 }).limit(6).toArray();
             res.send(result);
         });
-//get 6 popular instructor based on 
-        //classes
 
+        //classes
 
         app.get('/classes', async (req, res) => {
             const { email } = req.query;
@@ -108,7 +117,7 @@ async function run() {
         })
 
         //class post
-        app.post('/classes', async (req, res) => {
+        app.post('/classes', verifyJWT, verifyInstructor, async (req, res) => {
             const data = req.body;
             const result = await classCollection.insertOne(data);
             res.send(result)
