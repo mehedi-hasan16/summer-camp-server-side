@@ -105,6 +105,13 @@ async function run() {
 
         //classes
 
+        //approve classes 
+
+        app.get('/classes/approve', async (req, res) => {
+            const result = await classCollection.find({ status: 'approve' }).toArray();
+            return res.send(result)
+        })
+
         app.get('/classes', async (req, res) => {
             const { email } = req.query;
             if (!email) {
@@ -219,7 +226,7 @@ async function run() {
             const result = await usersCollection.find({ role: 'instructor' }).limit(6).toArray();
             res.send(result);
         });
-        
+
         // app.get('/users', async (req, res) => {
         //     const { role, email } = req.query;
         //     if (!role && !email) {
@@ -307,11 +314,11 @@ async function run() {
             res.send({ insertResult, deleteResult });
         })
 
-//review 
-app.get('/review', async(req, res)=>{
-    const result = await reviewCollection.find().toArray();
-    res.send(result);
-})
+        //review 
+        app.get('/review', async (req, res) => {
+            const result = await reviewCollection.find().toArray();
+            res.send(result);
+        })
 
 
         // Send a ping to confirm a successful connection
