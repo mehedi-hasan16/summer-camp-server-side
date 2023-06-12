@@ -168,17 +168,13 @@ async function run() {
         app.post('/courses/:id/purchase', async (req, res) => {
             const courseId = req.params.id;
 
-            console.log(courseId);
             // Find the course by its ID
             const course = await classCollection.findOne({ _id: new ObjectId(courseId) });
-
-            console.log(course);
 
             // Check if there are available seats
             if (course.seats <= 0) {
                 return res.send({ message: 'No available seats' });
             }
-
             // Decrement the number of seats and increment enrolled
             const updatedCourse = await classCollection.findOneAndUpdate({ _id: new ObjectId(courseId) },
                 { $inc: { seats: -1, enrolled: 1 } },
@@ -242,7 +238,6 @@ async function run() {
         app.patch('/users/:id/role', verifyJWT, verifyAdmin, async (req, res) => {
             const { id } = req.params;
             const { role } = req.body;
-            console.log(id, role);
             const result = await usersCollection.updateOne({ _id: new ObjectId(id) }, { $set: { role } });
             res.send(result);
 
@@ -250,7 +245,6 @@ async function run() {
 
         app.delete('/users/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
-            console.log(id);
             const query = { _id: new ObjectId(id) }
             const result = await usersCollection.deleteOne(query)
             res.send(result)
