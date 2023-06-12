@@ -72,7 +72,7 @@ async function run() {
             }
             next();
         }
-        
+
         // jwt instrructor verifiy 
         const verifyInstructor = async (req, res, next) => {
             const email = req.decoded.email;
@@ -231,8 +231,9 @@ async function run() {
 
 
         // limit user instructor 
-        app.get('/users/limitInstructor', async (req, res) => {
-            const result = await usersCollection.find({ role: 'instructor' }).limit(6).toArray();
+        app.get('/users/limitInstructor/6', async (req, res) => {
+            const query = {role: 'instructor'}
+            const result = await usersCollection.find(query).limit(6).toArray();
             res.send(result);
         });
 
@@ -275,7 +276,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete('/cart/:id', verifyJWT, verifyAdmin, async (req, res) => {
+        app.delete('/cart/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
             const result = await cartCollection.deleteOne(query);
